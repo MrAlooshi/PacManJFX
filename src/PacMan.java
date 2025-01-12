@@ -6,6 +6,7 @@ import javax.swing.*;
 public class PacMan extends JPanel implements ActionListener, KeyListener {
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
+        move();
     repaint();
     }
 
@@ -16,8 +17,33 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
     public void keyPressed(KeyEvent keyEvent) {}
 
     @Override
-    public void keyReleased(KeyEvent keyEvent) {
-    System.out.println("KeyEvent: " + keyEvent.getKeyCode());
+    public void keyReleased(KeyEvent e) {
+    //System.out.println("KeyEvent: " + keyEvent.getKeyCode());
+        if (e.getKeyCode() == KeyEvent.VK_UP) {
+            pacman.updateDirection('U');
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            pacman.updateDirection('D');
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            pacman.updateDirection('L');
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            pacman.updateDirection('R');
+        }
+
+        if (pacman.direction == 'U') {
+            pacman.image = pacmanUpImage;
+        }
+        else if (pacman.direction == 'D') {
+            pacman.image = pacmanDownImage;
+        }
+        else if (pacman.direction == 'L') {
+            pacman.image = pacmanLeftImage;
+        }
+        else if (pacman.direction == 'R') {
+            pacman.image = pacmanRightImage;
+        }
     }
 
     class Block {
@@ -30,6 +56,9 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         int startX;
         int startY;
 
+        char direction = 'U'; // U D L R for directions
+        int velocityX = 0;
+        int velocityY = 0;
         Block(Image image, int x, int y, int height, int width) {
             this.image = image;
             this.x = x;
@@ -39,6 +68,30 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
             this.startX = x;
             this.startY = y;
 
+        }
+        void updateDirection(char direction) {
+            this.direction = direction;
+            updateVelocity();
+
+        }
+        void updateVelocity() {
+        if (this.direction == 'U') {
+            this.velocityX = 0;
+            this.velocityY = -tileSize/4;
+        }
+        else if(this.direction == 'D') {
+            this.velocityX = 0;
+            this.velocityY = tileSize/4;
+        }
+        else if(this.direction == 'L') {
+            this.velocityX = -tileSize/4;
+            this.velocityY = 0;
+
+        }
+        else if(this.direction == 'R') {
+            this.velocityX = tileSize/4;
+            this.velocityY = 0;
+        }
         }
     }
    private int rowCount= 21;
@@ -176,6 +229,25 @@ public class PacMan extends JPanel implements ActionListener, KeyListener {
         for (Block food : foods) {
             g.fillRect(food.x, food.y, food.width, food.height);
         }
+    }
+    public void move(){
+        pacman.x += pacman.velocityX;
+        pacman.y += pacman.velocityY;
+
+        //check wall collisions
+        for (Block wall : walls) {
+            if (collision(pacman,wall)) {
+                pacman.x -= pacman.velocityX;
+                pacman.y -= pacman.velocityY;
+                break;
+            }
+        }
+    }
+    public boolean collision(Block a, Block b) {
+        return a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y;
     }
 }
 
