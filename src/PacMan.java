@@ -9,24 +9,34 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
+/**
+ * PacMan class represents the main gameplay logic.
+ * It extends Canvas to display the game and handles the movement of Pac-Man, ghosts, food, and walls.
+ */
 public class PacMan extends Canvas {
+    // Declare images for the different Pac-Man directions
     private Image pacmanUpImage;
     private Image pacmanDownImage;
     private Image pacmanLeftImage;
     private Image pacmanRightImage;
+
+    // Block class represents objects in the game like Pac-Man, walls, ghosts, and food
     class Block {
-        private int x;
-        private int y;
-        private int width;
-        private int height;
+        private int x, y, width, height;
         private Image image;
-
-        private int startX;
-        private int startY;
+        private int startX, startY;
         private char direction = 'U'; // U D L R
-        private int velocityX = 0;
-        private int velocityY = 0;
+        private int velocityX = 0, velocityY = 0;
 
+        /**
+         * Block constructor initializes an image, position, and size.
+         *
+         * @param image  The image representing the object (e.g., Pac-Man, ghosts, walls)
+         * @param x      The x-coordinate of the block
+         * @param y      The y-coordinate of the block
+         * @param width  The width of the block
+         * @param height The height of the block
+         */
         public Block(Image image, int x, int y, int width, int height) {
             this.image = image;
             this.x = x;
@@ -37,29 +47,26 @@ public class PacMan extends Canvas {
             this.startY = y;
         }
 
+        // Getters and setters for block's attributes
         public int getX() { return x; }
         public void setX(int x) { this.x = x; }
-
         public int getY() { return y; }
         public void setY(int y) { this.y = y; }
-
         public int getWidth() { return width; }
         public int getHeight() { return height; }
-
         public Image getImage() { return image; }
         public void setImage(Image image) { this.image = image; }
-
         public char getDirection() { return direction; }
         public void setDirection(char direction) { this.direction = direction; }
-
         public int getVelocityX() { return velocityX; }
         public void setVelocityX(int velocityX) { this.velocityX = velocityX; }
-
         public int getVelocityY() { return velocityY; }
         public void setVelocityY(int velocityY) { this.velocityY = velocityY; }
 
-
-
+        /**
+         * Update the direction of the block and its velocity.
+         * If Pac-Man, it moves based on user input; if ghosts, it moves based on AI logic.
+         */
         void updateDirection(char direction) {
             char prevDirection = this.direction;
             this.direction = direction;
@@ -76,44 +83,33 @@ public class PacMan extends Canvas {
             }
         }
 
+        /**
+         * Update the velocity based on the direction.
+         *
+         * @param isPacman If true, it applies Pac-Man's speed; otherwise, ghost's speed.
+         */
         void updateVelocity(boolean isPacman) {
-            int speed;
-            if (isPacman) {
-                speed = tileSize / 4;  // Pac-Man speed
-            } else {
-                speed = tileSize / 10; // Ghost speed (slower)
-            }
-
-            // Update velocity based on direction
-            if (this.direction == 'U') {
-                this.velocityX = 0;
-                this.velocityY = -speed;
-            } else if (this.direction == 'D') {
-                this.velocityX = 0;
-                this.velocityY = speed;
-            } else if (this.direction == 'L') {
-                this.velocityX = -speed;
-                this.velocityY = 0;
-            } else if (this.direction == 'R') {
-                this.velocityX = speed;
-                this.velocityY = 0;
-            }
+            int speed = (isPacman) ? tileSize / 4 : tileSize / 10;
+            if (this.direction == 'U') { this.velocityX = 0; this.velocityY = -speed; }
+            else if (this.direction == 'D') { this.velocityX = 0; this.velocityY = speed; }
+            else if (this.direction == 'L') { this.velocityX = -speed; this.velocityY = 0; }
+            else if (this.direction == 'R') { this.velocityX = speed; this.velocityY = 0; }
         }
 
-
-
+        /**
+         * Resets the block to its initial position.
+         */
         public void reset() {
             this.x = this.startX;
             this.y = this.startY;
         }
     }
 
-    private int rowCount = 21;
-    private int columnCount = 19;
-    private int tileSize = 32;
-    private int boardWidth = columnCount * tileSize;
-    private int boardHeight = rowCount * tileSize;
+    // Gameboard dimensions and setup
+    private int rowCount = 21, columnCount = 19, tileSize = 32;
+    private int boardWidth = columnCount * tileSize, boardHeight = rowCount * tileSize;
 
+    // Tile map representing the game layout
     private String[] tileMap = {
             "XXXXXXXXXXXXXXXXXXX",
             "X        X        X",
@@ -146,14 +142,16 @@ public class PacMan extends Canvas {
     private AnimationTimer gameLoop;
     private char[] directions = {'U', 'D', 'L', 'R'};
     private Random random = new Random();
-    private int score = 0;
-    private int lives = 3;
+    private int score = 0, lives = 3;
     private boolean gameOver = false;
 
+    /**
+     * Constructor for the PacMan class, sets up the game, loads images,
+     * and initializes the game loop.
+     */
     public PacMan() {
         setWidth(boardWidth);
         setHeight(boardHeight);
-
         walls = new HashSet<>();
         foods = new ArrayList<>();
         ghosts = new HashSet<>();
@@ -170,12 +168,18 @@ public class PacMan extends Canvas {
         setOnKeyPressed(e -> handleKeyPress(e.getCode()));
     }
 
+    /**
+     * Sets a random direction for the ghost to move.
+     */
     private void setRandomDirection(Block ghost) {
         char randomDirection = directions[random.nextInt(directions.length)];
         ghost.setDirection(randomDirection);
         ghost.updateVelocity(false);
     }
 
+    /**
+     * Loads the map, populates walls, food, and ghosts based on the tileMap.
+     */
     private void loadMap() {
         for (int r = 0; r < tileMap.length; r++) {
             String row = tileMap[r];
@@ -185,39 +189,21 @@ public class PacMan extends Canvas {
                 int y = r * tileSize;
 
                 switch (tile) {
-                    case 'X':
-                        walls.add(new Block(new Image("wall.png"), x, y, tileSize, tileSize));
-                        break;
-                    case 'P':
-                        pacman = new Block(new Image("pacmanRight.png"), x, y, tileSize, tileSize);
-                        break;
-                    case 'b':
-                        Block blueGhost = new Block(new Image("blueGhost.png"), x, y, tileSize, tileSize);
-                        setRandomDirection(blueGhost); // Set random initial direction for ghost
-                        ghosts.add(blueGhost);
-                        break;
-                    case 'o':
-                        Block orangeGhost = new Block(new Image("orangeGhost.png"), x, y, tileSize, tileSize);
-                        setRandomDirection(orangeGhost); // Set random initial direction for ghost
-                        ghosts.add(orangeGhost);
-                        break;
-                    case 'p':
-                        Block pinkGhost = new Block(new Image("pinkGhost.png"), x, y, tileSize, tileSize);
-                        setRandomDirection(pinkGhost); // Set random initial direction for ghost
-                        ghosts.add(pinkGhost);
-                        break;
-                    case 'r':
-                        Block redGhost = new Block(new Image("redGhost.png"), x, y, tileSize, tileSize);
-                        setRandomDirection(redGhost); // Set random initial direction for ghost
-                        ghosts.add(redGhost);
-                        break;
-                    case ' ':
-                        foods.add(new Block(null, x + tileSize / 2 - 2, y + tileSize / 2 - 2, 4, 4));
-                        break;
+                    case 'X': walls.add(new Block(new Image("wall.png"), x, y, tileSize, tileSize)); break;
+                    case 'P': pacman = new Block(new Image("pacmanRight.png"), x, y, tileSize, tileSize); break;
+                    case 'b': Block blueGhost = new Block(new Image("blueGhost.png"), x, y, tileSize, tileSize); setRandomDirection(blueGhost); ghosts.add(blueGhost); break;
+                    case 'o': Block orangeGhost = new Block(new Image("orangeGhost.png"), x, y, tileSize, tileSize); setRandomDirection(orangeGhost); ghosts.add(orangeGhost); break;
+                    case 'p': Block pinkGhost = new Block(new Image("pinkGhost.png"), x, y, tileSize, tileSize); setRandomDirection(pinkGhost); ghosts.add(pinkGhost); break;
+                    case 'r': Block redGhost = new Block(new Image("redGhost.png"), x, y, tileSize, tileSize); setRandomDirection(redGhost); ghosts.add(redGhost); break;
+                    case ' ': foods.add(new Block(null, x + tileSize / 2 - 2, y + tileSize / 2 - 2, 4, 4)); break;
                 }
             }
         }
     }
+
+    /**
+     * Starts the game loop using AnimationTimer to repeatedly update the game state.
+     */
     private void startGameLoop() {
         gameLoop = new AnimationTimer() {
             @Override
@@ -229,8 +215,10 @@ public class PacMan extends Canvas {
         gameLoop.start();
     }
 
+    /**
+     * Draws the game state to the canvas, including Pac-Man, ghosts, walls, and food.
+     */
     private void draw(GraphicsContext gc) {
-        // Clear the canvas and set the background to black
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, boardWidth, boardHeight); // Fill the background with black
 
@@ -263,7 +251,9 @@ public class PacMan extends Canvas {
         }
     }
 
-
+    /**
+     * Resets positions of Pac-Man and ghosts.
+     */
     private void resetPositions() {
         pacman.setX(pacman.startX);
         pacman.setY(pacman.startY);
@@ -271,29 +261,33 @@ public class PacMan extends Canvas {
         pacman.setVelocityY(0);
 
         for (Block ghost : ghosts) {
-            ghost.updateVelocity(false);  // false indicates it's a ghost
+            ghost.updateVelocity(false);
             ghost.setX(ghost.getX() + ghost.getVelocityX());
             ghost.setY(ghost.getY() + ghost.getVelocityY());
         }
     }
 
+    /**
+     * Sorts ghosts by their X coordinate.
+     */
     private void sortGhostsByX() {
         ArrayList<Block> ghostList = new ArrayList<>(ghosts);
         ghostList.sort((g1, g2) -> Integer.compare(g1.getX(), g2.getX()));
         ghosts.clear();
         ghosts.addAll(ghostList);
     }
+
+    /**
+     * Moves Pac-Man and ghosts based on their velocities, checks for boundary wrapping,
+     * and handles collisions with walls, ghosts, and food.
+     */
     private void move() {
-        // Move Pac-Man
         pacman.setX(pacman.getX() + pacman.getVelocityX());
         pacman.setY(pacman.getY() + pacman.getVelocityY());
 
-        // Check Pac-Man boundary wrapping
-        if (pacman.getX() < 0) {
-            pacman.setX(boardWidth - pacman.getWidth());
-        } else if (pacman.getX() >= boardWidth) {
-            pacman.setX(0);
-        }
+        // Check boundary wrapping for Pac-Man
+        if (pacman.getX() < 0) { pacman.setX(boardWidth - pacman.getWidth()); }
+        else if (pacman.getX() >= boardWidth) { pacman.setX(0); }
 
         // Handle Pac-Man collisions with walls
         for (Block wall : walls) {
@@ -304,33 +298,25 @@ public class PacMan extends Canvas {
             }
         }
 
-        // Move ghosts
+        // Move ghosts and handle their logic
         for (Block ghost : ghosts) {
-            ghost.updateVelocity(false); // Update ghost velocity
-
-            // Move ghosts horizontally and vertically
+            ghost.updateVelocity(false);
             ghost.setX(ghost.getX() + ghost.getVelocityX());
             ghost.setY(ghost.getY() + ghost.getVelocityY());
 
-            // Teleport ghosts if out of bounds horizontally
-            if (ghost.getX() < 0) {
-                ghost.setX(boardWidth - ghost.getWidth()); // Teleport to the right side
-            } else if (ghost.getX() >= boardWidth) {
-                ghost.setX(0); // Teleport to the left side
-            }
+            if (ghost.getX() < 0) { ghost.setX(boardWidth - ghost.getWidth()); }
+            else if (ghost.getX() >= boardWidth) { ghost.setX(0); }
 
             // Handle the middle row fix (row 9)
             if (ghost.getY() == tileSize * 9) {
-                // Only update the direction if the ghost was moving horizontally
                 if (ghost.getDirection() == 'L' || ghost.getDirection() == 'R') {
-                    ghost.updateDirection(random.nextBoolean() ? 'U' : 'D'); // Choose randomly up or down
+                    ghost.updateDirection(random.nextBoolean() ? 'U' : 'D');
                 }
             }
 
             // Handle ghost collisions with walls
             for (Block wall : walls) {
                 if (collision(ghost, wall)) {
-                    // When colliding with a wall, reverse movement and change direction randomly
                     ghost.setX(ghost.getX() - ghost.getVelocityX());
                     ghost.setY(ghost.getY() - ghost.getVelocityY());
                     char newDirection = directions[random.nextInt(directions.length)];
@@ -349,7 +335,7 @@ public class PacMan extends Canvas {
             }
         }
 
-        // Check for food collision and reload map if all food is eaten
+        // Check for food collision
         Block foodEaten = null;
         for (Block food : foods) {
             if (collision(pacman, food)) {
@@ -365,31 +351,23 @@ public class PacMan extends Canvas {
         }
     }
 
-
-
-
+    /**
+     * Handle user input for Pac-Man movement.
+     */
     private void handleKeyPress(KeyCode code) {
-        if (code == KeyCode.UP) {
-            pacman.updateDirection('U');
-            pacman.updateVelocity(true);  // true means it's Pac-Man
-            pacman.setImage(pacmanUpImage);
-        } else if (code == KeyCode.DOWN) {
-            pacman.updateDirection('D');
-            pacman.updateVelocity(true);
-            pacman.setImage(pacmanDownImage);
-        } else if (code == KeyCode.LEFT) {
-            pacman.updateDirection('L');
-            pacman.updateVelocity(true);
-            pacman.setImage(pacmanLeftImage);
-        } else if (code == KeyCode.RIGHT) {
-            pacman.updateDirection('R');
-            pacman.updateVelocity(true);
-            pacman.setImage(pacmanRightImage);
-        }
+        if (code == KeyCode.UP) { pacman.updateDirection('U'); pacman.updateVelocity(true); pacman.setImage(pacmanUpImage); }
+        else if (code == KeyCode.DOWN) { pacman.updateDirection('D'); pacman.updateVelocity(true); pacman.setImage(pacmanDownImage); }
+        else if (code == KeyCode.LEFT) { pacman.updateDirection('L'); pacman.updateVelocity(true); pacman.setImage(pacmanLeftImage); }
+        else if (code == KeyCode.RIGHT) { pacman.updateDirection('R'); pacman.updateVelocity(true); pacman.setImage(pacmanRightImage); }
     }
 
-
-
+    /**
+     * Checks if two blocks have collided.
+     *
+     * @param a First block.
+     * @param b Second block.
+     * @return True if blocks are colliding, false otherwise.
+     */
     private boolean collision(Block a, Block b) {
         return a.getX() < b.getX() + b.getWidth() &&
                 a.getX() + a.getWidth() > b.getX() &&
